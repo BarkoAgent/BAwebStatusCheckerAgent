@@ -12,7 +12,7 @@ To install this you can either use docker or just install all the dependencies f
 Once you have done that, you will get an agent running in a websocket configuration. Now you need to:
 
 
-1. Navigate to https://chat.barkoagent.com/
+1. Navigate to https://chat.barkoagent.com/ 
 2. Press on the drop down for project
 3. Click on `Create project`
 4. Add project name, select Project Type = Custom Agent
