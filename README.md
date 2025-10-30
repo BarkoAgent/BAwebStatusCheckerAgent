@@ -11,14 +11,13 @@ To install this you can either use docker or just install all the dependencies f
 
 Once you have done that, you will get an agent running in a websocket configuration. Now you need to:
 
-1. Install Web Scrapper from public repository - `pip install git+https://github.com/Nilssten/web-status-checker.git`
-2. Navigate to https://chat.barkoagent.com/ 
-3. Press on the drop down for project
-4. Click on `Create project`
-5. Add project name, select Project Type = Custom Agent
-6. Copy the `Agent WS URI endpoint` value to use it for the Custom Agent python command (add it to the .env file in the project)
-7. add the system prompt (for this project there already is a prompt created in [here](system_prompt.txt))
-8. Click save and publish and you will be all set to talk with your agent
+1. Navigate to https://chat.barkoagent.com/ 
+2. Press on the drop down for project
+3. Click on `Create project`
+4. Add project name, select Project Type = Custom Agent
+5. Copy the `Agent WS URI endpoint` value to use it for the Custom Agent python command (add it to the .env file in the project)
+6. add the system prompt (for this project there already is a prompt created in [here](system_prompt.txt))
+7. Click save and publish and you will be all set to talk with your agent
 
 
 ### Run with docker

@@ -11,3 +11,4 @@ html5lib
 mypy
 dataclasses-json
 requests
+git+https://github.com/Nilssten/web-status-checker.git
