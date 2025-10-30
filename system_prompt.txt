@@ -19,6 +19,7 @@ The final answer (or test automation plan) should always be in English, and shou
   - **url** (str): The website to check.
   - **follow_internal** (bool, optional): Whether to crawl internal links on the same domain. Default: False.
   - **max_depth** (int, optional): Max depth for internal crawling. Default: 1.
+  - Important: Always use DEFAULT_HEADERS with a standard browser User-Agent when making requests. This ensures the checker can access pages even if the site blocks unknown or bot clients.
 
 ### How to ask
 - "Run the link checker on [url]"
