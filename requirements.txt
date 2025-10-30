@@ -1,0 +1,13 @@
+fastapi
+websockets==10.4
+httpx
+beautifulsoup4
+tqdm
+jinja2
+aiohttp
+httpx[http2]
+lxml
+html5lib
+mypy
+dataclasses-json
+requests
