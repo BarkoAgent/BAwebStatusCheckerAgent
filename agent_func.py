@@ -12,11 +12,13 @@ import logging
 import sys
 import ssl
 import types
+
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
 import socket
 
 from web_status_checker.WebCrawler import LinkChecker, LinkInfo
+
 
 async def run_link_checker(**kwargs):
     """
@@ -25,7 +27,7 @@ async def run_link_checker(**kwargs):
     Prompt example:
         "Run the link checker on [link_here] with internal link crawling enabled (max depth 2).
         Return a list of all links found with their HTTP status, note, and source URL as text output.
-        Also include conclusions like amount of links checked, percentage passed/failed."
+        Also include conclusions like amount of links checked, percentage passed/failed/skipped/redacted."
 
     Parameters (passed via kwargs):
         website_url (str): The URL to start crawling from. Required.
@@ -128,36 +130,27 @@ async def run_link_checker(**kwargs):
         return {"error": f"Exception: {str(e)}"}
 
     formatted = [{
-
-        "url": r.url,
-
-        "status": r.status_code,
-
-        "note": r.note,
-
-        "source": r.source_url,
-
-        "type": r.source_type
-
+        "url": getattr(r, "url", ""),
+        "status": getattr(r, "status_code", "ERROR"),
+        "note": getattr(r, "note", ""),
+        "source": getattr(r, "source_url", ""),
+        "type": getattr(r, "source_type", ""),
+        "redirect_count": getattr(r, "redirect_count", 0),
+        "final_url": getattr(r, "final_url", getattr(r, "url", "")),
+        "is_binary": getattr(r, "is_binary", False)
     } for r in results]
 
-    if only_broken:
-        formatted = [r for r in formatted if r["status"] != 200]
-
-    passed = sum(1 for r in formatted if r["status"] == 200)
-
-    failed = len(formatted) - passed
+    passed = sum(1 for r in formatted if r["status"] == 200 and r["redirect_count"] == 0 and not r["is_binary"])
+    redirected = sum(1 for r in formatted if r["redirect_count"] > 0)
+    skipped = sum(1 for r in formatted if r["is_binary"])
+    failed = len(formatted) - passed - redirected - skipped
 
     summary = {
-
         "total_links": len(formatted),
-
         "passed": passed,
-
+        "redirected": redirected,
+        "skipped": skipped,
         "failed": failed,
-
         "pass_rate": round(passed / len(formatted) * 100, 2) if formatted else 0
-
     }
-
     return {"results": formatted, "summary": summary}
