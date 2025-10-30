@@ -59,47 +59,48 @@ async def run_link_checker(**kwargs):
 
     try:
         checker = LinkChecker()
-        user_agent = kwargs.get("user_agent")
-        if user_agent:
-            print(f"[DEBUG] Overriding User-Agent with: {user_agent}")
+        user_agent = kwargs.get("user_agent") or (
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+            "AppleWebKit/537.36 (KHTML, like Gecko) "
+            "Chrome/115.0.0.0 Safari/537.36"
+        )
+        print(f"[DEBUG] Using User-Agent: {user_agent}")
 
-            original_extract_links = checker.extract_links
+        original_extract_links = checker.extract_links
 
-            def patched_extract_links(self, url, attempts=3):
-                headers = {
-                    'User-Agent': user_agent,
-                    'Referer': url,
-                    'Accept': 'text/html,application/xhtml+xml',
-                }
+        def patched_extract_links(self, url, attempts=3):
+            headers = {
+                'User-Agent': user_agent,
+                'Referer': url,
+                'Accept': 'text/html,application/xhtml+xml',
+            }
+            for attempt in range(attempts):
+                try:
+                    response = httpx.get(url, headers=headers, timeout=300, follow_redirects=True)
+                    if "html" not in response.headers.get("Content-Type", ""):
+                        logging.warning(f"Non-HTML content from {url}. Skipping.")
+                        return set(), "Non-HTML content"
 
-                for attempt in range(attempts):
-                    try:
-                        response = httpx.get(url, headers=headers, timeout=300, follow_redirects=True)
+                    soup = BeautifulSoup(response.text, 'html.parser')
+                    links = {
+                        urljoin(url, link.get('href'))
+                        for link in soup.find_all('a')
+                        if link.get('href')
+                    }
 
-                        if "html" not in response.headers.get("Content-Type", ""):
-                            logging.warning(f"Non-HTML content from {url}. Skipping.")
-                            return set(), "Non-HTML content"
+                    logging.info(f"Extracted {len(links)} links from {url}")
+                    return links, None
 
-                        soup = BeautifulSoup(response.text, 'html.parser')
-                        links = {
-                            urljoin(url, link.get('href'))
-                            for link in soup.find_all('a')
-                            if link.get('href')
-                        }
+                except httpx.RequestError as e:
+                    logging.warning(f"Request failed for {url}: {str(e)}")
+                    if attempt == attempts - 1:
+                        return set(), str(e)
+                except Exception as e:
+                    logging.warning(f"Error extracting links from {url}: {str(e)}")
+                    if attempt == attempts - 1:
+                        return set(), str(e)
 
-                        logging.info(f"Extracted {len(links)} links from {url}")
-                        return links, None
-
-                    except httpx.RequestError as e:
-                        logging.warning(f"Request failed for {url}: {str(e)}")
-                        if attempt == attempts - 1:
-                            return set(), str(e)
-                    except Exception as e:
-                        logging.warning(f"Error extracting links from {url}: {str(e)}")
-                        if attempt == attempts - 1:
-                            return set(), str(e)
-
-            checker.extract_links = types.MethodType(patched_extract_links, checker)
+        checker.extract_links = types.MethodType(patched_extract_links, checker)
         results = await asyncio.wait_for(
             checker.crawl_and_check_links(
                 start_url=website_url,
